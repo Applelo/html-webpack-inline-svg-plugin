@@ -48,7 +48,6 @@ class HtmlWebpackInlineSVGPlugin {
                     // process the images
                     return this.processImages(htmlPluginData.html)
                         .then((html) => {
-
                             htmlPluginData.html = html || htmlPluginData.html;
 
                             return typeof callback === 'function' ?
@@ -57,19 +56,17 @@ class HtmlWebpackInlineSVGPlugin {
 
                         })
                         .catch((err) => {
-
                             console.log(err);
+
                             return typeof callback === 'function' ?
                                 callback(null, htmlPluginData) :
                                 htmlPluginData
-
                         })
                 })
 
             } else {
-
                 HtmlWebpackPlugin.getHooks(compilation).beforeEmit.tapAsync(
-                    'afterEmit', (htmlPluginData, callback) => {
+                    'beforeEmit', (htmlPluginData, callback) => {
 
                     // fetch the output path from webpack
                     this.outputPath = compilation.outputOptions &&
@@ -78,16 +75,14 @@ class HtmlWebpackInlineSVGPlugin {
                         '';
 
                     if (!this.outputPath) {
-                        console.log(chalk.red('no output path found on compilation.outputOptions'))
+                        console.log(chalk.red('no output path found on compilation.outputOptions'));
                         return typeof callback === 'function' ?
                             callback(null, htmlPluginData) :
                             htmlPluginData
                     }
 
-
                     // get the custom config
                     this.getUserConfig(htmlPluginData);
-
 
                     // get the filename
                     const filename = htmlPluginData.outputName ? htmlPluginData.outputName : '';
@@ -106,8 +101,9 @@ class HtmlWebpackInlineSVGPlugin {
                     // add filename and original html to the file array
                     this.files.push({
                         filename,
-                        originalHtml,
+                        originalHtml
                     });
+
 
 
                     // fire callback to pass control to any further plugins
@@ -121,32 +117,29 @@ class HtmlWebpackInlineSVGPlugin {
 
         });
 
+        compiler.hooks.afterEmit.tap('after-emit', (compilation) => {
 
-        // hook after-emit so we can read the generated SVG assets within
-        // the output directory
-
-        if (!this.runPreEmit) {
-
-            HtmlWebpackPlugin.getHooks(compiler).afterEmit.tapAsync(
-                'afterEmit',  (compilation, callback) => {
+            // hook after-emit so we can read the generated SVG assets within
+            // the output directory
+            if (!this.runPreEmit) {
 
                 if (!this.files.length) {
                     console.log(chalk.green('no files passed for SVG inline to process'));
                     return
                 }
 
-
                 // iterate over each file and inline it's SVGs
                 // then return a callback if available
-
-                return Promise.all(this.files.map(file => this.processImages(file.originalHtml)))
+                return Promise.all(this.files.map(file => {
+                    this.processImages(file.originalHtml)
+                }))
                     .then((htmlArray) => Promise.all(htmlArray.map((html, index) => this.updateOutputFile(html, this.files[index].filename))))
-                    .then(() => typeof callback === 'function' ? callback() : null)
+                    .then(() => { return true })
                     .catch((err) => console.log(chalk.red(err.message)))
+            }
 
-            })
+        });
 
-        }
 
     }
 
@@ -211,6 +204,7 @@ class HtmlWebpackInlineSVGPlugin {
 
         return new Promise((resolve, reject) => {
 
+            //console.log('html', html);
             const documentFragment = parse5.parseFragment(html, {
                 sourceCodeLocationInfo: true
             });
@@ -266,18 +260,17 @@ class HtmlWebpackInlineSVGPlugin {
      * @returns {Promise}
      *
      */
-    processImage (html) {
+    processImage(html) {
 
         return new Promise((resolve, reject) => {
 
 
             // rebuild the document fragment each time with the updated html
-
             const documentFragment = parse5.parseFragment(html, {
                 sourceCodeLocationInfo: true,
             });
 
-            const inlineImage = this.getFirstInlineImage(documentFragment)
+            const inlineImage = this.getFirstInlineImage(documentFragment);
 
             if (inlineImage) {
 
@@ -332,13 +325,11 @@ class HtmlWebpackInlineSVGPlugin {
      *
      */
     getFirstInlineImage (documentFragment) {
-
         const inlineImages = this.getInlineImages(documentFragment);
 
         if (!inlineImages.length) return null;
 
         return inlineImages[0]
-
     }
 
 
@@ -349,12 +340,10 @@ class HtmlWebpackInlineSVGPlugin {
      *
      */
     isNodeValidInlineImage (node) {
-
         return !!(
             node.nodeName === 'img' &&
             _.filter(node.attrs, { name: 'inline' }).length &&
             this.getImagesSrc(node))
-
 
     }
 

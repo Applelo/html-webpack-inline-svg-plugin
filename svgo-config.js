@@ -40,4 +40,4 @@ module.exports = {
     transformsWithOnePath: false,
     removeDimensions: true,
     removeAttrs: false,
-}
+};
