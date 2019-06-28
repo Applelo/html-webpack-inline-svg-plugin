@@ -4,6 +4,3 @@ node_js:
   - "8"
 script:
   - npm test
-notifications:
-  slack: thebigsurf:EjL4xVZdsZgFkQ8MaBYEjAkp
-  email: false
