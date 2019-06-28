@@ -1,7 +1,7 @@
-var path = require('path')
-var fs = require('fs')
-var cheerio = require('cheerio')
-var webpackConfig = require('./webpack.base.config')
+let path = require('path');
+let fs = require('fs');
+let cheerio = require('cheerio');
+let webpackConfig = require('./webpack.base.config');
 
 module.exports = [
 
@@ -9,15 +9,12 @@ module.exports = [
         label: 'should not inline imgs without inline attribute',
         func: function (done) {
 
-            var htmlFile = path.resolve(webpackConfig.outputDir, 'index.html')
+            let htmlFile = path.resolve(webpackConfig.outputDir, 'index.html');
 
             fs.readFile(htmlFile, 'utf8', function (err, data) {
-
-                expect(err).toBeFalsy()
-
-                var $ = cheerio.load(data)
-
-                expect($('img.leave-me').length).toBe(1)
+                expect(err).toBeFalsy();
+                let $ = cheerio.load(data);
+                expect($('img.leave-me').length).toBe(1);
 
                 done()
 
@@ -30,19 +27,13 @@ module.exports = [
     {
         label: 'should inline imgs with inline attribute',
         func: function (done) {
-
-            var htmlFile = path.resolve(webpackConfig.outputDir, 'index.html')
+            let htmlFile = path.resolve(webpackConfig.outputDir, 'index.html');
 
             fs.readFile(htmlFile, 'utf8', function (err, data) {
-
-                expect(err).toBeFalsy()
-
-                var $ = cheerio.load(data)
-
-                expect($('svg#inline-me').length).toBe(1)
-
+                expect(err).toBeFalsy();
+                let $ = cheerio.load(data);
+                expect($('svg#inline-me').length).toBe(1);
                 done()
-
             })
 
         },
@@ -52,19 +43,13 @@ module.exports = [
     {
         label: 'should remove img tags with inline attribute',
         func: function (done) {
-
-            var htmlFile = path.resolve(webpackConfig.outputDir, 'index.html')
+            let htmlFile = path.resolve(webpackConfig.outputDir, 'index.html');
 
             fs.readFile(htmlFile, 'utf8', function (err, data) {
-
-                expect(err).toBeFalsy()
-
-                var $ = cheerio.load(data)
-
-                expect($('#replace-me').length).toBe(0)
-
+                expect(err).toBeFalsy();
+                let $ = cheerio.load(data);
+                expect($('#replace-me').length).toBe(0);
                 done()
-
             })
 
         },
@@ -74,17 +59,12 @@ module.exports = [
     {
         label: 'should remove multiple inlined img tags within the same document',
         func: function (done) {
-
-            var htmlFile = path.resolve(webpackConfig.outputDir, 'index.html')
+            let htmlFile = path.resolve(webpackConfig.outputDir, 'index.html');
 
             fs.readFile(htmlFile, 'utf8', function (err, data) {
-
-                expect(err).toBeFalsy()
-
-                var $ = cheerio.load(data)
-
-                expect($('#then-replace-me').length).toBe(0)
-
+                expect(err).toBeFalsy();
+                let $ = cheerio.load(data);
+                expect($('#then-replace-me').length).toBe(0);
                 done()
 
             })
@@ -96,17 +76,12 @@ module.exports = [
     {
         label: 'should ignore images that are not svg',
         func: function (done) {
-
-            var htmlFile = path.resolve(webpackConfig.outputDir, 'index.html')
+            let htmlFile = path.resolve(webpackConfig.outputDir, 'index.html');
 
             fs.readFile(htmlFile, 'utf8', function (err, data) {
-
-                expect(err).toBeFalsy()
-
-                var $ = cheerio.load(data)
-
-                expect($('#not-an-svg').length).toBe(1)
-
+                expect(err).toBeFalsy();
+                let $ = cheerio.load(data);
+                expect($('#not-an-svg').length).toBe(1);
                 done()
 
             })
@@ -118,18 +93,13 @@ module.exports = [
     {
         label: 'do not html decode content',
         func: function (done) {
-
-            var htmlFile = path.resolve(webpackConfig.outputDir, 'index.html')
+            let htmlFile = path.resolve(webpackConfig.outputDir, 'index.html');
 
             fs.readFile(htmlFile, 'utf8', function (err, data) {
-
-                expect(err).toBeFalsy()
-
+                expect(err).toBeFalsy();
                 expect(data.indexOf('<?= $foo->bar; ?>'))
-                    .not.toBe(-1)
-
+                    .not.toBe(-1);
                 done()
-
             })
 
         },
@@ -140,24 +110,19 @@ module.exports = [
         label: 'do not touch broken tags',
         func: function (done) {
 
-            var htmlFile = path.resolve(webpackConfig.outputDir, 'index.html')
+            let htmlFile = path.resolve(webpackConfig.outputDir, 'index.html');
 
             fs.readFile(htmlFile, 'utf8', function (err, data) {
-
-                expect(err).toBeFalsy()
-
-                var re1 = /should output broken tags<\/p>/gi;
-
+                expect(err).toBeFalsy();
+                let re1 = /should output broken tags<\/p>/gi;
                 expect(data.match(re1))
-                    .not.toBe(null)
+                    .not.toBe(null);
 
-                var re2 = /<p>should output unclosed tags/gi;
-
+                let re2 = /<p>should output unclosed tags/gi;
                 expect(data.match(re2))
-                    .not.toBe(null)
+                    .not.toBe(null);
 
                 done()
-
             })
 
         },
@@ -173,17 +138,13 @@ module.exports = [
     {
         label: 'allow partials to have broken tags',
         func: function (done) {
-
-            var htmlFile = path.resolve(webpackConfig.outputDir, 'partial.html')
+            let htmlFile = path.resolve(webpackConfig.outputDir, 'partial.html');
 
             fs.readFile(htmlFile, 'utf8', function (err, data) {
-
-                expect(err).toBeFalsy()
-
-                const dataSquashed = data.replace(/\s/g,'')
-
+                expect(err).toBeFalsy();
+                const dataSquashed = data.replace(/\s/g,'');
                 expect(dataSquashed.startsWith('<\/p><\/div>'))
-                    .toBe(true)
+                    .toBe(true);
 
                 done()
 
@@ -196,19 +157,13 @@ module.exports = [
     {
         label: 'should replace nested inline imgs',
         func: function (done) {
-
-            var htmlFile = path.resolve(webpackConfig.outputDir, 'index.html')
+            let htmlFile = path.resolve(webpackConfig.outputDir, 'index.html');
 
             fs.readFile(htmlFile, 'utf8', function (err, data) {
-
-                expect(err).toBeFalsy()
-
-                var $ = cheerio.load(data)
-
-                expect($('#deep-replace-me').length).toBe(0)
-
+                expect(err).toBeFalsy();
+                let $ = cheerio.load(data);
+                expect($('#deep-replace-me').length).toBe(0);
                 done()
-
             })
 
         },
@@ -218,23 +173,18 @@ module.exports = [
     {
         label: 'should contain deep inline SVG',
         func: function (done) {
-
-            var htmlFile = path.resolve(webpackConfig.outputDir, 'index.html')
+            let htmlFile = path.resolve(webpackConfig.outputDir, 'index.html');
 
             fs.readFile(htmlFile, 'utf8', function (err, data) {
-
-                expect(err).toBeFalsy()
-
-                var $ = cheerio.load(data)
-
-                expect($('svg#deep-inline-me').length).toBe(1)
+                expect(err).toBeFalsy();
+                let $ = cheerio.load(data);
+                expect($('svg#deep-inline-me').length).toBe(1);
 
                 done()
-
             })
 
         },
 
     },
 
-]
+];

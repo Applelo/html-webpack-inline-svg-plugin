@@ -1,15 +1,15 @@
 /* eslint-env jasmine */
-var path = require('path')
-var fs = require('fs')
-var chalk = require('chalk')
-var cheerio = require('cheerio')
-var webpack = require('webpack')
-var webpackConfig = require('./webpack.base.config')
-var webpackPostEmitConfig = require('./webpack.post-emit.config')
-var webpackPreEmitConfig = require('./webpack.pre-emit.config')
-var HtmlWebpackInlineSVGPlugin = require('../')
-var jasmineTests = require('./jasmine.tests')
-var rm = require('rimraf')
+var path = require('path');
+var fs = require('fs');
+var chalk = require('chalk');
+var cheerio = require('cheerio');
+var webpack = require('webpack');
+var webpackConfig = require('./webpack.base.config');
+var webpackPostEmitConfig = require('./webpack.post-emit.config');
+var webpackPreEmitConfig = require('./webpack.pre-emit.config');
+var HtmlWebpackInlineSVGPlugin = require('../');
+var jasmineTests = require('./jasmine.tests');
+var rm = require('rimraf');
 
 rm(webpackConfig.outputDir, (err) => {
 

@@ -1,7 +1,7 @@
-const path = require('path')
-const webpackConfig = require('./webpack.base.config')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const HtmlWebpackInlineSVGPlugin = require('../')
+const path = require('path');
+const webpackConfig = require('./webpack.base.config');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HtmlWebpackInlineSVGPlugin = require('../');
 
 module.exports = {
 
@@ -19,4 +19,4 @@ module.exports = {
         }),
     ],
 
-}
+};

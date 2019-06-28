@@ -1,12 +1,13 @@
-'use strict'
+'use strict';
 
-const path = require('path')
-const chalk = require('chalk')
-const parse5 = require('parse5')
-const _ = require('lodash')
-const fs = require('fs')
-const SVGO = require('svgo')
-const svgoDefaultConfig = require(path.resolve(__dirname, 'svgo-config.js'))
+const path = require('path');
+const chalk = require('chalk');
+const parse5 = require('parse5');
+const _ = require('lodash');
+const fs = require('fs');
+const SVGO = require('svgo');
+const svgoDefaultConfig = require(path.resolve(__dirname, 'svgo-config.js'));
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 
 /**
@@ -16,18 +17,13 @@ const svgoDefaultConfig = require(path.resolve(__dirname, 'svgo-config.js'))
 class HtmlWebpackInlineSVGPlugin {
 
     constructor (options) {
-
         if (options && options.runPreEmit) {
-
-            this.runPreEmit = true
-
+            this.runPreEmit = true;
         }
 
-        this.userConfig = ''
-        this.outputPath = ''
-
-        this.files = []
-
+        this.userConfig = '';
+        this.outputPath = '';
+        this.files = [];
     }
 
 
@@ -38,26 +34,22 @@ class HtmlWebpackInlineSVGPlugin {
      */
     apply (compiler) {
 
-
         // Hook into the html-webpack-plugin processing
-
-        compiler.plugin('compilation', (compilation) => {
+        compiler.hooks.compilation.tap('compilation', (compilation) => {
 
             if (this.runPreEmit) {
 
-                compilation.plugin('html-webpack-plugin-after-html-processing', (htmlPluginData, callback) => {
-
+                HtmlWebpackPlugin.getHooks(compilation).afterTemplateExecution.tapAsync(
+                    'afterTemplateExecution', (htmlPluginData, callback) => {
                     // get the custom config
-
-                    this.getUserConfig(htmlPluginData)
+                    this.getUserConfig(htmlPluginData);
 
 
                     // process the images
-
                     return this.processImages(htmlPluginData.html)
                         .then((html) => {
 
-                            htmlPluginData.html = html || htmlPluginData.html
+                            htmlPluginData.html = html || htmlPluginData.html;
 
                             return typeof callback === 'function' ?
                                 callback(null, htmlPluginData) :
@@ -66,69 +58,56 @@ class HtmlWebpackInlineSVGPlugin {
                         })
                         .catch((err) => {
 
-                            console.log(err)
-
+                            console.log(err);
                             return typeof callback === 'function' ?
                                 callback(null, htmlPluginData) :
                                 htmlPluginData
 
                         })
-
                 })
 
             } else {
 
-                compilation.plugin('html-webpack-plugin-after-emit', (htmlPluginData, callback) => {
+                HtmlWebpackPlugin.getHooks(compilation).beforeEmit.tapAsync(
+                    'afterEmit', (htmlPluginData, callback) => {
 
                     // fetch the output path from webpack
-
                     this.outputPath = compilation.outputOptions &&
                         compilation.outputOptions.path ?
                         compilation.outputOptions.path :
-                        ''
+                        '';
 
                     if (!this.outputPath) {
-
                         console.log(chalk.red('no output path found on compilation.outputOptions'))
-
                         return typeof callback === 'function' ?
                             callback(null, htmlPluginData) :
                             htmlPluginData
-
                     }
 
 
                     // get the custom config
-
-                    this.getUserConfig(htmlPluginData)
+                    this.getUserConfig(htmlPluginData);
 
 
                     // get the filename
-
-                    const filename = htmlPluginData.outputName ? htmlPluginData.outputName : ''
+                    const filename = htmlPluginData.outputName ? htmlPluginData.outputName : '';
 
                     if (!filename) {
-
-                        console.log(chalk.red('no filename found on htmlPluginData.outputName'))
-
+                        console.log(chalk.red('no filename found on htmlPluginData.outputName'));
                         return typeof callback === 'function' ?
                             callback(null, htmlPluginData) :
                             htmlPluginData
-
                     }
 
 
                     // get the emitted HTML - prior to SVG's being inlined
-
-                    const originalHtml = htmlPluginData.html.source()
-
+                    const originalHtml = htmlPluginData.html;
 
                     // add filename and original html to the file array
-
                     this.files.push({
                         filename,
                         originalHtml,
-                    })
+                    });
 
 
                     // fire callback to pass control to any further plugins
@@ -138,10 +117,9 @@ class HtmlWebpackInlineSVGPlugin {
                         htmlPluginData
 
                 })
-
             }
 
-        })
+        });
 
 
         // hook after-emit so we can read the generated SVG assets within
@@ -149,14 +127,12 @@ class HtmlWebpackInlineSVGPlugin {
 
         if (!this.runPreEmit) {
 
-            compiler.plugin('after-emit', (compilation, callback) => {
+            HtmlWebpackPlugin.getHooks(compiler).afterEmit.tapAsync(
+                'afterEmit',  (compilation, callback) => {
 
                 if (!this.files.length) {
-
-                    console.log(chalk.green('no files passed for SVG inline to process'))
-
+                    console.log(chalk.green('no files passed for SVG inline to process'));
                     return
-
                 }
 
 
@@ -211,21 +187,13 @@ class HtmlWebpackInlineSVGPlugin {
 
         return new Promise((resolve, reject) => {
 
-
             // set the output file to the updated html
-
             fs.writeFile(path.resolve(this.outputPath, filename), html, (err) => {
-
                 if (err) {
-
-                    reject(err)
-
+                    reject(err);
                     return
-
                 }
-
                 resolve()
-
             })
 
         })
@@ -244,31 +212,24 @@ class HtmlWebpackInlineSVGPlugin {
         return new Promise((resolve, reject) => {
 
             const documentFragment = parse5.parseFragment(html, {
-                locationInfo: true
-            })
+                sourceCodeLocationInfo: true
+            });
 
 
             // grab the images to process from the original DOM fragment
-
-            const inlineImages = this.getInlineImages(documentFragment)
-
+            const inlineImages = this.getInlineImages(documentFragment);
 
             // if we have no inlined images return the html
-
-            if (!inlineImages.length) return resolve()
-
+            if (!inlineImages.length) return resolve();
 
             // process the imageNodes
-
             this.updateHTML(html, inlineImages)
                 .then((html) => resolve(html))
                 .catch((err) => {
-
-                    console.log(chalk.underline.red('processImages hit error'))
-                    console.log(chalk.red(err))
+                    console.log(chalk.underline.red('processImages hit error'));
+                    console.log(chalk.red(err));
 
                     reject(err)
-
                 })
 
         })
@@ -291,9 +252,7 @@ class HtmlWebpackInlineSVGPlugin {
 
             return promise
                 .then((html) => {
-
                     return this.processImage(html)
-
                 })
                 .catch(err => console.log(err))
 
@@ -315,8 +274,8 @@ class HtmlWebpackInlineSVGPlugin {
             // rebuild the document fragment each time with the updated html
 
             const documentFragment = parse5.parseFragment(html, {
-                locationInfo: true,
-            })
+                sourceCodeLocationInfo: true,
+            });
 
             const inlineImage = this.getFirstInlineImage(documentFragment)
 
@@ -324,19 +283,13 @@ class HtmlWebpackInlineSVGPlugin {
 
                 this.processOutputHtml(html, inlineImage)
                     .then((html) => {
-
-                        resolve(html)
-
+                        resolve(html);
                     })
                     .catch((err) => reject(err))
 
             } else {
-
-
                 // no inline image - just resolve
-
                 resolve(html)
-
             }
 
         })
@@ -353,22 +306,16 @@ class HtmlWebpackInlineSVGPlugin {
      */
     getInlineImages (documentFragment, inlineImages) {
 
-        if (!inlineImages) inlineImages = []
+        if (!inlineImages) inlineImages = [];
 
         if (documentFragment.childNodes && documentFragment.childNodes.length) {
 
             documentFragment.childNodes.forEach((childNode) => {
-
                 if (this.isNodeValidInlineImage(childNode)) {
-
                     inlineImages.push(childNode)
-
                 } else {
-
                     inlineImages = this.getInlineImages(childNode, inlineImages)
-
                 }
-
             })
 
         }
@@ -386,9 +333,9 @@ class HtmlWebpackInlineSVGPlugin {
      */
     getFirstInlineImage (documentFragment) {
 
-        const inlineImages = this.getInlineImages(documentFragment)
+        const inlineImages = this.getInlineImages(documentFragment);
 
-        if (!inlineImages.length) return null
+        if (!inlineImages.length) return null;
 
         return inlineImages[0]
 
@@ -420,22 +367,16 @@ class HtmlWebpackInlineSVGPlugin {
      */
     getImagesSrc (inlineImage) {
 
-        const svgSrcObject = _.find(inlineImage.attrs, { name: 'src' })
-
+        const svgSrcObject = _.find(inlineImage.attrs, { name: 'src' });
 
         // image does not have a src attribute
-
-        if (!svgSrcObject) return ''
-
+        if (!svgSrcObject) return '';
 
         // grab the image src
-
-        const svgSrc = svgSrcObject.value
-
+        const svgSrc = svgSrcObject.value;
 
         // image src attribute must not be blank and it must be referencing a file with a .svg extension
-
-        return svgSrc && svgSrc.indexOf('.svg') !== -1 ? svgSrc : ''
+        return svgSrc && svgSrc.indexOf('.svg') !== -1 ? svgSrc : '';
 
     }
 
@@ -451,41 +392,34 @@ class HtmlWebpackInlineSVGPlugin {
 
         return new Promise((resolve, reject) => {
 
-            const svgSrc = this.getImagesSrc(inlineImage)
-
+            const svgSrc = this.getImagesSrc(inlineImage);
 
             // if the image isn't valid resolve
-
-            if (!svgSrc) return resolve(html)
-
+            if (!svgSrc) return resolve(html);
 
             // read in the svg
-
             fs.readFile(path.resolve(this.outputPath, svgSrc), 'utf8', (err, data) => {
 
-                if (err) reject(err)
+                if (err) reject(err);
 
                 const configObj = Object.assign(svgoDefaultConfig, this.userConfig)
-
-                const config = {}
+                const config = {};
 
 
                 // pass all objects to the config.plugins array
-
                 config.plugins = _.map(configObj, (value, key) => ({ [key]: value }));
 
 
                 // create a new instance of SVGO
                 // passing it the merged config, to optimize the svg
-
-                const svgo = new SVGO(config)
+                const svgo = new SVGO(config);
 
                 svgo.optimize(data)
                     .then((result) => {
 
-                        const optimisedSVG = result.data
+                        const optimisedSVG = result.data;
 
-                        html = this.replaceImageWithSVG(html, inlineImage, optimisedSVG)
+                        html = this.replaceImageWithSVG(html, inlineImage, optimisedSVG);
 
                         resolve(html)
 
@@ -507,18 +441,13 @@ class HtmlWebpackInlineSVGPlugin {
      *
      */
     replaceImageWithSVG (html, inlineImage, svg) {
-
-        const start = inlineImage.__location.startOffset
-
-        const end = inlineImage.__location.endOffset
-
+        const start = inlineImage.sourceCodeLocation.startOffset;
+        const end = inlineImage.sourceCodeLocation.endOffset;
 
         // remove the img tag and add the svg content
-
-        return html.substring(0, start) + svg + html.substring(end)
-
+        return html.substring(0, start) + svg + html.substring(end);
     }
 
 }
 
-module.exports = HtmlWebpackInlineSVGPlugin
+module.exports = HtmlWebpackInlineSVGPlugin;
